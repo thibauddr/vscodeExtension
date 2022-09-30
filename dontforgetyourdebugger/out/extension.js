@@ -18,7 +18,7 @@ function activate(context) {
         }
         const tabSize = getTabSize(editor.options.tabSize);
         const document = editor.document;
-        const config = vscode.workspace.getConfiguration("turboConsoleLog");
+        const config = vscode.workspace.getConfiguration("dontforgetyourdebugger");
         const properties = getExtensionProperties(config);
         for (let index = 0; index < editor.selections.length; index++) {
             const selection = editor.selections[index];
@@ -30,13 +30,10 @@ function activate(context) {
             }
             const selectedVar = document.getText(selection) || wordUnderCursor;
             const lineOfSelectedVar = selection.active.line;
-            // Check if the selection line is not the last one in the document and the selected variable is not empty
-            if (selectedVar.trim().length !== 0) {
-                const { wrapLogMessage, logMessagePrefix, quote, addSemicolonInTheEnd, insertEnclosingClass, insertEnclosingFunction, insertEmptyLineBeforeLogMessage, insertEmptyLineAfterLogMessage, delimiterInsideMessage, includeFileNameAndLineNum, logType, logFunction, } = properties;
-                await editor.edit((editBuilder) => {
-                    jsDebugMessage.msg(editBuilder, document, selectedVar, lineOfSelectedVar, wrapLogMessage, logMessagePrefix, quote, addSemicolonInTheEnd, insertEnclosingClass, insertEnclosingFunction, insertEmptyLineBeforeLogMessage, insertEmptyLineAfterLogMessage, delimiterInsideMessage, includeFileNameAndLineNum, tabSize, logType, logFunction);
-                });
-            }
+            const { wrapLogMessage, logMessagePrefix, quote, addSemicolonInTheEnd, insertEnclosingClass, insertEnclosingFunction, insertEmptyLineBeforeLogMessage, insertEmptyLineAfterLogMessage, delimiterInsideMessage, includeFileNameAndLineNum, logType, logFunction, } = properties;
+            await editor.edit((editBuilder) => {
+                jsDebugMessage.msg(editBuilder, document, selectedVar, lineOfSelectedVar, wrapLogMessage, logMessagePrefix, quote, addSemicolonInTheEnd, insertEnclosingClass, insertEnclosingFunction, insertEmptyLineBeforeLogMessage, insertEmptyLineAfterLogMessage, delimiterInsideMessage, includeFileNameAndLineNum, tabSize, logType, logFunction);
+            });
         }
     });
     context.subscriptions.push(createDebugger);

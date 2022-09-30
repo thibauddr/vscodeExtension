@@ -24,7 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
       const tabSize: number | string = getTabSize(editor.options.tabSize);
       const document: vscode.TextDocument = editor.document;
       const config: vscode.WorkspaceConfiguration =
-        vscode.workspace.getConfiguration("turboConsoleLog");
+        vscode.workspace.getConfiguration("dontforgetyourdebugger");
       const properties: ExtensionProperties = getExtensionProperties(config);
       for (let index = 0; index < editor.selections.length; index++) {
         const selection: vscode.Selection = editor.selections[index];
@@ -39,9 +39,26 @@ export function activate(context: vscode.ExtensionContext) {
         const selectedVar: string =
           document.getText(selection) || wordUnderCursor;
         const lineOfSelectedVar: number = selection.active.line;
-        // Check if the selection line is not the last one in the document and the selected variable is not empty
-        if (selectedVar.trim().length !== 0) {
-          const {
+        const {
+          wrapLogMessage,
+          logMessagePrefix,
+          quote,
+          addSemicolonInTheEnd,
+          insertEnclosingClass,
+          insertEnclosingFunction,
+          insertEmptyLineBeforeLogMessage,
+          insertEmptyLineAfterLogMessage,
+          delimiterInsideMessage,
+          includeFileNameAndLineNum,
+          logType,
+          logFunction,
+        } = properties;
+        await editor.edit((editBuilder) => {
+          jsDebugMessage.msg(
+            editBuilder,
+            document,
+            selectedVar,
+            lineOfSelectedVar,
             wrapLogMessage,
             logMessagePrefix,
             quote,
@@ -52,31 +69,11 @@ export function activate(context: vscode.ExtensionContext) {
             insertEmptyLineAfterLogMessage,
             delimiterInsideMessage,
             includeFileNameAndLineNum,
+            tabSize,
             logType,
-            logFunction,
-          } = properties;
-          await editor.edit((editBuilder) => {
-            jsDebugMessage.msg(
-              editBuilder,
-              document,
-              selectedVar,
-              lineOfSelectedVar,
-              wrapLogMessage,
-              logMessagePrefix,
-              quote,
-              addSemicolonInTheEnd,
-              insertEnclosingClass,
-              insertEnclosingFunction,
-              insertEmptyLineBeforeLogMessage,
-              insertEmptyLineAfterLogMessage,
-              delimiterInsideMessage,
-              includeFileNameAndLineNum,
-              tabSize,
-              logType,
-              logFunction
-            );
-          });
-        }
+            logFunction
+          );
+        });
       }
     }
   );

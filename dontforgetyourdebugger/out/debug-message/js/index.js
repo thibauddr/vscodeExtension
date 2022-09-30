@@ -24,23 +24,10 @@ class JSDebugMessage extends __1.DebugMessage {
             logMessagePrefix.length === 0) {
             logMessagePrefix = `${delemiterInsideMessage} `;
         }
-        const debuggingMsg = `${logFunction !== "log" ? logFunction : `console.${logType}`}(${quote}${logMessagePrefix}${logMessagePrefix.length !== 0 &&
-            logMessagePrefix !== `${delemiterInsideMessage} `
-            ? ` ${delemiterInsideMessage} `
-            : ""}${includeFileNameAndLineNum
-            ? `file: ${fileName} ${delemiterInsideMessage} line ${lineOfLogMsg + linesToAdd} ${delemiterInsideMessage} `
-            : ""}${insertEnclosingClass
-            ? classThatEncloseTheVar.length > 0
-                ? `${classThatEncloseTheVar} ${delemiterInsideMessage} `
-                : ``
-            : ""}${insertEnclosingFunction
-            ? funcThatEncloseTheVar.length > 0
-                ? `${funcThatEncloseTheVar} ${delemiterInsideMessage} `
-                : ""
-            : ""}${selectedVar}${quote}, ${selectedVar})${semicolon}`;
+        const debuggingMsg = `${logFunction !== "log" ? logFunction : `debugger;`}${semicolon}`;
         if (wrapLogMessage) {
             // 16 represents the length of console.log("");
-            const wrappingMsg = `console.${logType}(${quote}${logMessagePrefix} ${"-".repeat(debuggingMsg.length - 16)}${logMessagePrefix}${quote})${semicolon}`;
+            const wrappingMsg = `debugger;`;
             textEditor.insert(new vscode.Position(lineOfLogMsg >= document.lineCount
                 ? document.lineCount
                 : lineOfLogMsg, 0), `${lineOfLogMsg === document.lineCount ? "\n" : ""}${spacesBeforeMsg}${wrappingMsg}\n${spacesBeforeMsg}${debuggingMsg}\n${spacesBeforeMsg}${wrappingMsg}\n`);
