@@ -11,7 +11,36 @@ const js_2 = require("./line-code-processing/js");
 function activate(context) {
     const jsLineCodeProcessing = new js_2.JSLineCodeProcessing();
     const jsDebugMessage = new js_1.JSDebugMessage(jsLineCodeProcessing);
-    let removeDebugger = vscode.commands.registerCommand("dontforgetyourdebugger.debugger", () => {
+    let createDebugger = vscode.commands.registerCommand("dontforgetyourdebugger.createDebugger", async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            return;
+        }
+        const tabSize = getTabSize(editor.options.tabSize);
+        const document = editor.document;
+        const config = vscode.workspace.getConfiguration("turboConsoleLog");
+        const properties = getExtensionProperties(config);
+        for (let index = 0; index < editor.selections.length; index++) {
+            const selection = editor.selections[index];
+            let wordUnderCursor = "";
+            const rangeUnderCursor = document.getWordRangeAtPosition(selection.active);
+            // if rangeUnderCursor is undefined, `document.getText(undefined)` will return the entire file.
+            if (rangeUnderCursor) {
+                wordUnderCursor = document.getText(rangeUnderCursor);
+            }
+            const selectedVar = document.getText(selection) || wordUnderCursor;
+            const lineOfSelectedVar = selection.active.line;
+            // Check if the selection line is not the last one in the document and the selected variable is not empty
+            if (selectedVar.trim().length !== 0) {
+                const { wrapLogMessage, logMessagePrefix, quote, addSemicolonInTheEnd, insertEnclosingClass, insertEnclosingFunction, insertEmptyLineBeforeLogMessage, insertEmptyLineAfterLogMessage, delimiterInsideMessage, includeFileNameAndLineNum, logType, logFunction, } = properties;
+                await editor.edit((editBuilder) => {
+                    jsDebugMessage.msg(editBuilder, document, selectedVar, lineOfSelectedVar, wrapLogMessage, logMessagePrefix, quote, addSemicolonInTheEnd, insertEnclosingClass, insertEnclosingFunction, insertEmptyLineBeforeLogMessage, insertEmptyLineAfterLogMessage, delimiterInsideMessage, includeFileNameAndLineNum, tabSize, logType, logFunction);
+                });
+            }
+        }
+    });
+    context.subscriptions.push(createDebugger);
+    let removeDebugger = vscode.commands.registerCommand("dontforgetyourdebugger.removeDebugger", () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             return;

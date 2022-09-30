@@ -10,14 +10,31 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:dontforgetyourdebugger.debugger"
+    "onCommand:dontforgetyourdebugger.createDebugger",
+    "onCommand:dontforgetyourdebugger.removeDebugger"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "dontforgetyourdebugger.debugger",
-        "title": "removedebugger"
+        "command": "dontforgetyourdebugger.createDebugger",
+        "title": "create debugger"
+      },
+      {
+        "command": "dontforgetyourdebugger.removeDebugger",
+        "title": "remove debugger"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "dontforgetyourdebugger.createDebugger",
+        "key": "ctrl+alt+l",
+        "mac": "ctrl+alt+l"
+      },
+      {
+        "command": "dontforgetyourdebugger.createDebugger",
+        "key": "alt+shift+c",
+        "mac": "alt+shift+c"
       }
     ]
   },

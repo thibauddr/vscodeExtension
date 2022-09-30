@@ -13,8 +13,78 @@ export function activate(context: vscode.ExtensionContext) {
   const jsLineCodeProcessing: LineCodeProcessing = new JSLineCodeProcessing();
   const jsDebugMessage: DebugMessage = new JSDebugMessage(jsLineCodeProcessing);
 
+  let createDebugger = vscode.commands.registerCommand(
+    "dontforgetyourdebugger.createDebugger",
+    async () => {
+      const editor: vscode.TextEditor | undefined =
+        vscode.window.activeTextEditor;
+      if (!editor) {
+        return;
+      }
+      const tabSize: number | string = getTabSize(editor.options.tabSize);
+      const document: vscode.TextDocument = editor.document;
+      const config: vscode.WorkspaceConfiguration =
+        vscode.workspace.getConfiguration("turboConsoleLog");
+      const properties: ExtensionProperties = getExtensionProperties(config);
+      for (let index = 0; index < editor.selections.length; index++) {
+        const selection: vscode.Selection = editor.selections[index];
+
+        let wordUnderCursor = "";
+        const rangeUnderCursor: vscode.Range | undefined =
+          document.getWordRangeAtPosition(selection.active);
+        // if rangeUnderCursor is undefined, `document.getText(undefined)` will return the entire file.
+        if (rangeUnderCursor) {
+          wordUnderCursor = document.getText(rangeUnderCursor);
+        }
+        const selectedVar: string =
+          document.getText(selection) || wordUnderCursor;
+        const lineOfSelectedVar: number = selection.active.line;
+        // Check if the selection line is not the last one in the document and the selected variable is not empty
+        if (selectedVar.trim().length !== 0) {
+          const {
+            wrapLogMessage,
+            logMessagePrefix,
+            quote,
+            addSemicolonInTheEnd,
+            insertEnclosingClass,
+            insertEnclosingFunction,
+            insertEmptyLineBeforeLogMessage,
+            insertEmptyLineAfterLogMessage,
+            delimiterInsideMessage,
+            includeFileNameAndLineNum,
+            logType,
+            logFunction,
+          } = properties;
+          await editor.edit((editBuilder) => {
+            jsDebugMessage.msg(
+              editBuilder,
+              document,
+              selectedVar,
+              lineOfSelectedVar,
+              wrapLogMessage,
+              logMessagePrefix,
+              quote,
+              addSemicolonInTheEnd,
+              insertEnclosingClass,
+              insertEnclosingFunction,
+              insertEmptyLineBeforeLogMessage,
+              insertEmptyLineAfterLogMessage,
+              delimiterInsideMessage,
+              includeFileNameAndLineNum,
+              tabSize,
+              logType,
+              logFunction
+            );
+          });
+        }
+      }
+    }
+  );
+
+  context.subscriptions.push(createDebugger);
+
   let removeDebugger = vscode.commands.registerCommand(
-    "dontforgetyourdebugger.debugger",
+    "dontforgetyourdebugger.removeDebugger",
     () => {
       const editor: vscode.TextEditor | undefined =
         vscode.window.activeTextEditor;
