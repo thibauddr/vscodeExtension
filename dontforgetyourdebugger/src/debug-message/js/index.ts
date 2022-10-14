@@ -27,70 +27,20 @@ export class JSDebugMessage extends DebugMessage {
     logType: string,
     logFunction: string
   ): void {
-    const classThatEncloseTheVar: string = this.enclosingBlockName(
-      document,
-      lineOfSelectedVar,
-      "class"
-    );
-    const funcThatEncloseTheVar: string = this.enclosingBlockName(
-      document,
-      lineOfSelectedVar,
-      "function"
-    );
     const lineOfLogMsg: number = this.line(
       document,
       lineOfSelectedVar,
       selectedVar
     );
-    const linesToAdd: number = insertEmptyLineBeforeLogMessage ? 2 : 1;
     const spacesBeforeMsg: string = this.spacesBeforeLogMsg(
       document,
       lineOfSelectedVar,
       lineOfLogMsg
     );
     const semicolon: string = addSemicolonInTheEnd ? ";" : "";
-    const fileName = document.fileName.includes("/")
-      ? document.fileName.split("/")[document.fileName.split("/").length - 1]
-      : document.fileName.split("\\")[document.fileName.split("\\").length - 1];
-    if (
-      !includeFileNameAndLineNum &&
-      !insertEnclosingFunction &&
-      !insertEnclosingClass &&
-      logMessagePrefix.length === 0
-    ) {
-      logMessagePrefix = `${delemiterInsideMessage} `;
-    }
     const debuggingMsg = `${
       logFunction !== "log" ? logFunction : `debugger;`
     }${semicolon}`;
-    if (wrapLogMessage) {
-      // 16 represents the length of console.log("");
-      const wrappingMsg = `debugger;`;
-      textEditor.insert(
-        new vscode.Position(
-          lineOfLogMsg >= document.lineCount
-            ? document.lineCount
-            : lineOfLogMsg,
-          0
-        ),
-        `${
-          lineOfLogMsg === document.lineCount ? "\n" : ""
-        }${spacesBeforeMsg}${wrappingMsg}\n${spacesBeforeMsg}${debuggingMsg}\n${spacesBeforeMsg}${wrappingMsg}\n`
-      );
-      return;
-    }
-    const previousMsgLogLine = document.lineAt(lineOfLogMsg - 1);
-    if (/\){.*}/.test(previousMsgLogLine.text.replace(/\s/g, ""))) {
-      this.emptyBlockMsg(
-        document,
-        textEditor,
-        previousMsgLogLine,
-        lineOfLogMsg,
-        debuggingMsg,
-        spacesBeforeMsg
-      );
-      return;
-    }
     const selectedVarLine = document.lineAt(lineOfSelectedVar);
     const selectedVarLineLoc = selectedVarLine.text;
     if (
@@ -118,11 +68,7 @@ export class JSDebugMessage extends DebugMessage {
         lineOfLogMsg >= document.lineCount ? document.lineCount : lineOfLogMsg,
         0
       ),
-      `${insertEmptyLineBeforeLogMessage ? "\n" : ""}${
-        lineOfLogMsg === document.lineCount ? "\n" : ""
-      }${spacesBeforeMsg}${debuggingMsg}\n${
-        insertEmptyLineAfterLogMessage ? "\n" : ""
-      }`
+      `${spacesBeforeMsg}${debuggingMsg}\n`
     );
   }
   private anonymousPropMsg(
@@ -615,7 +561,7 @@ export class JSDebugMessage extends DebugMessage {
     const documentNbrOfLines: number = document.lineCount;
     const logMessages: Message[] = [];
     for (let i = 0; i < documentNbrOfLines; i++) {
-      const turboConsoleLogMessage = /console\.log\(/;
+      const turboConsoleLogMessage = /debugger\(/;
       if (turboConsoleLogMessage.test(document.lineAt(i).text)) {
         const logMessage: Message = {
           spaces: "",
@@ -642,5 +588,28 @@ export class JSDebugMessage extends DebugMessage {
       }
     }
     return logMessages;
+  }
+  replaceInFile(files: string, from: string, to: string): void {
+    const replaceInFiles = require("../../../node_modules/replace-in-file");
+    const options = {
+      files: '*.ts',
+      // Replacement
+      from: /debugger;/g, // string or regex
+      to: 'test', // string or fn  (fn: carrying last argument - path to replaced file)
+      saveOldFile: false, // default
+      encoding: "utf8", // default
+      shouldSkipBinaryFiles: true, // default
+      onlyFindPathsWithoutReplace: false, // default
+      returnPaths: true, // default
+      returnCountOfMatchesByPaths: true, // default
+    };
+
+    replaceInFiles(options)
+      .then((changedFiles: any) => {
+        console.log("Modified files:", changedFiles.join(", "));
+      })
+      .catch((error: any) => {
+        console.error("Error occurred:", error);
+      });
   }
 }

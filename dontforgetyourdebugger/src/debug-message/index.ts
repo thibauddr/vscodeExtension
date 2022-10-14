@@ -36,6 +36,11 @@ export abstract class DebugMessage {
     delemiterInsideMessage: string,
     quote: string,
   ): Message[];
+  abstract replaceInFile(
+    files: string,
+    from: string,
+    to: string,
+  ): void;
   abstract enclosingBlockName(
     document: TextDocument,
     lineOfSelectedVar: number,

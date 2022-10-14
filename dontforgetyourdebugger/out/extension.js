@@ -11,6 +11,9 @@ const js_2 = require("./line-code-processing/js");
 function activate(context) {
     const jsLineCodeProcessing = new js_2.JSLineCodeProcessing();
     const jsDebugMessage = new js_1.JSDebugMessage(jsLineCodeProcessing);
+    /**
+     * Add new line with debugger
+     */
     let createDebugger = vscode.commands.registerCommand("dontforgetyourdebugger.createDebugger", async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
@@ -20,11 +23,10 @@ function activate(context) {
         const document = editor.document;
         const config = vscode.workspace.getConfiguration("dontforgetyourdebugger");
         const properties = getExtensionProperties(config);
-        for (let index = 0; index < editor.selections.length; index++) {
-            const selection = editor.selections[index];
+        for (const element of editor.selections) {
+            const selection = element;
             let wordUnderCursor = "";
             const rangeUnderCursor = document.getWordRangeAtPosition(selection.active);
-            // if rangeUnderCursor is undefined, `document.getText(undefined)` will return the entire file.
             if (rangeUnderCursor) {
                 wordUnderCursor = document.getText(rangeUnderCursor);
             }
@@ -37,6 +39,9 @@ function activate(context) {
         }
     });
     context.subscriptions.push(createDebugger);
+    /**
+     * Remove all debugger on your project
+     */
     let removeDebugger = vscode.commands.registerCommand("dontforgetyourdebugger.removeDebugger", () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
@@ -46,24 +51,7 @@ function activate(context) {
         const document = editor.document;
         const config = vscode.workspace.getConfiguration("dontforgetyourdebugger");
         const properties = getExtensionProperties(config);
-        const logMessages = jsDebugMessage.detectAll(document, properties.delimiterInsideMessage, properties.quote);
-        editor.edit((editBuilder) => {
-            logMessages.forEach(({ lines }) => {
-                const firstLine = lines[0];
-                const lastLine = lines[lines.length - 1];
-                const lineBeforeFirstLine = new vscode.Range(new vscode.Position(firstLine.start.line - 1, 0), new vscode.Position(firstLine.end.line - 1, 0));
-                const lineAfterLastLine = new vscode.Range(new vscode.Position(lastLine.start.line + 1, 0), new vscode.Position(lastLine.end.line + 1, 0));
-                if (document.lineAt(lineBeforeFirstLine.start).text === "") {
-                    editBuilder.delete(lineBeforeFirstLine);
-                }
-                if (document.lineAt(lineAfterLastLine.start).text === "") {
-                    editBuilder.delete(lineAfterLastLine);
-                }
-                lines.forEach((line) => {
-                    editBuilder.delete(line);
-                });
-            });
-        });
+        jsDebugMessage.replaceInFile('*.ts', '*debugger;*', '');
     });
     context.subscriptions.push(removeDebugger);
 }

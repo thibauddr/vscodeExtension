@@ -9,35 +9,10 @@ class JSDebugMessage extends __1.DebugMessage {
         super(lineCodeProcessing);
     }
     msg(textEditor, document, selectedVar, lineOfSelectedVar, wrapLogMessage, logMessagePrefix, quote, addSemicolonInTheEnd, insertEnclosingClass, insertEnclosingFunction, insertEmptyLineBeforeLogMessage, insertEmptyLineAfterLogMessage, delemiterInsideMessage, includeFileNameAndLineNum, tabSize, logType, logFunction) {
-        const classThatEncloseTheVar = this.enclosingBlockName(document, lineOfSelectedVar, "class");
-        const funcThatEncloseTheVar = this.enclosingBlockName(document, lineOfSelectedVar, "function");
         const lineOfLogMsg = this.line(document, lineOfSelectedVar, selectedVar);
-        const linesToAdd = insertEmptyLineBeforeLogMessage ? 2 : 1;
         const spacesBeforeMsg = this.spacesBeforeLogMsg(document, lineOfSelectedVar, lineOfLogMsg);
         const semicolon = addSemicolonInTheEnd ? ";" : "";
-        const fileName = document.fileName.includes("/")
-            ? document.fileName.split("/")[document.fileName.split("/").length - 1]
-            : document.fileName.split("\\")[document.fileName.split("\\").length - 1];
-        if (!includeFileNameAndLineNum &&
-            !insertEnclosingFunction &&
-            !insertEnclosingClass &&
-            logMessagePrefix.length === 0) {
-            logMessagePrefix = `${delemiterInsideMessage} `;
-        }
         const debuggingMsg = `${logFunction !== "log" ? logFunction : `debugger;`}${semicolon}`;
-        if (wrapLogMessage) {
-            // 16 represents the length of console.log("");
-            const wrappingMsg = `debugger;`;
-            textEditor.insert(new vscode.Position(lineOfLogMsg >= document.lineCount
-                ? document.lineCount
-                : lineOfLogMsg, 0), `${lineOfLogMsg === document.lineCount ? "\n" : ""}${spacesBeforeMsg}${wrappingMsg}\n${spacesBeforeMsg}${debuggingMsg}\n${spacesBeforeMsg}${wrappingMsg}\n`);
-            return;
-        }
-        const previousMsgLogLine = document.lineAt(lineOfLogMsg - 1);
-        if (/\){.*}/.test(previousMsgLogLine.text.replace(/\s/g, ""))) {
-            this.emptyBlockMsg(document, textEditor, previousMsgLogLine, lineOfLogMsg, debuggingMsg, spacesBeforeMsg);
-            return;
-        }
         const selectedVarLine = document.lineAt(lineOfSelectedVar);
         const selectedVarLineLoc = selectedVarLine.text;
         if (this.lineCodeProcessing.isAnonymousFunction(selectedVarLineLoc) &&
@@ -46,7 +21,7 @@ class JSDebugMessage extends __1.DebugMessage {
             this.anonymousPropMsg(document, textEditor, tabSize, addSemicolonInTheEnd, selectedVarLine, debuggingMsg);
             return;
         }
-        textEditor.insert(new vscode.Position(lineOfLogMsg >= document.lineCount ? document.lineCount : lineOfLogMsg, 0), `${insertEmptyLineBeforeLogMessage ? "\n" : ""}${lineOfLogMsg === document.lineCount ? "\n" : ""}${spacesBeforeMsg}${debuggingMsg}\n${insertEmptyLineAfterLogMessage ? "\n" : ""}`);
+        textEditor.insert(new vscode.Position(lineOfLogMsg >= document.lineCount ? document.lineCount : lineOfLogMsg, 0), `${spacesBeforeMsg}${debuggingMsg}\n`);
     }
     anonymousPropMsg(document, textEditor, tabSize, addSemicolonInTheEnd, selectedPropLine, debuggingMsg) {
         const selectedVarPropLoc = selectedPropLine.text;
@@ -343,7 +318,7 @@ class JSDebugMessage extends __1.DebugMessage {
         const documentNbrOfLines = document.lineCount;
         const logMessages = [];
         for (let i = 0; i < documentNbrOfLines; i++) {
-            const turboConsoleLogMessage = /console\.log\(/;
+            const turboConsoleLogMessage = /debugger\(/;
             if (turboConsoleLogMessage.test(document.lineAt(i).text)) {
                 const logMessage = {
                     spaces: "",
@@ -362,6 +337,28 @@ class JSDebugMessage extends __1.DebugMessage {
             }
         }
         return logMessages;
+    }
+    replaceInFile(files, from, to) {
+        const replaceInFiles = require("../../../node_modules/replace-in-file");
+        const options = {
+            files: '*.ts',
+            // Replacement
+            from: /debugger;/g,
+            to: 'test',
+            saveOldFile: false,
+            encoding: "utf8",
+            shouldSkipBinaryFiles: true,
+            onlyFindPathsWithoutReplace: false,
+            returnPaths: true,
+            returnCountOfMatchesByPaths: true, // default
+        };
+        replaceInFiles(options)
+            .then((changedFiles) => {
+            console.log("Modified files:", changedFiles.join(", "));
+        })
+            .catch((error) => {
+            console.error("Error occurred:", error);
+        });
     }
 }
 exports.JSDebugMessage = JSDebugMessage;
